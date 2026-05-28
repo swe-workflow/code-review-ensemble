@@ -1,0 +1,47 @@
+{
+  "reviewers": [
+    {
+      "name": "Bugbot",
+      "type": "github-bot",
+      "enabled": true,
+      "trigger": "@cursor review",
+      "authorLogins": ["cursor[bot]"]
+    },
+    {
+      "name": "CodeRabbit",
+      "type": "github-bot",
+      "enabled": false,
+      "trigger": "@coderabbitai review",
+      "authorLogins": ["coderabbitai[bot]"]
+    },
+    {
+      "name": "Claude",
+      "type": "claude-agent",
+      "enabled": true
+    },
+    {
+      "name": "Codex",
+      "type": "cli",
+      "enabled": true,
+      "command": "codex exec --full-auto - < {PROMPT_FILE}"
+    },
+    {
+      "name": "Gemini",
+      "type": "cli",
+      "enabled": false,
+      "command": "gemini -y < {PROMPT_FILE}"
+    },
+    {
+      "name": "DeepSeek",
+      "type": "cli",
+      "enabled": false,
+      "command": "llm -m deepseek-reasoner < {PROMPT_FILE}"
+    },
+    {
+      "name": "Kimi",
+      "type": "cli",
+      "enabled": false,
+      "command": "llm -m moonshotai/kimi-k2-instruct < {PROMPT_FILE}"
+    }
+  ]
+}
