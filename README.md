@@ -1,6 +1,6 @@
 # code-review-turbo
 
-A configurable multi-agent code-review skill for [Claude Code](https://www.anthropic.com/claude-code). Runs every reviewer you've enabled — GitHub PR bots, the in-process Claude sub-agent, Codex, and any other CLI model you wire up (Gemini, DeepSeek, Kimi, …) — then cross-references their findings to separate real bugs from hallucinations before reporting.
+A configurable multi-agent code-review procedure that runs in any coding agent — Claude Code, Codex CLI, Gemini CLI, Cursor, or others — and orchestrates GitHub PR bots, Claude, Codex, and any CLI model you wire up (Gemini, DeepSeek, Kimi, …), then cross-references their findings to separate real bugs from hallucinations.
 
 The set of reviewers isn't hardcoded. It comes from a JSON config you can edit per-repo, so adding a new model is one entry.
 
@@ -17,7 +17,7 @@ The set of reviewers isn't hardcoded. It comes from a JSON config you can edit p
 |---|---|---|---|
 | Bugbot (Cursor) | GitHub bot | ✅ | Needs the [Cursor](https://cursor.com/) GitHub App on the repo |
 | CodeRabbit | GitHub bot | — | Needs the [CodeRabbit](https://www.coderabbit.ai/) GitHub App |
-| Claude | in-process sub-agent | ✅ | Uses Claude Code's Agent tool |
+| Claude | in-process sub-agent | ✅ | Claude Code only — uses its Agent tool; other hosts: substitute with a `cli` Claude entry |
 | Codex | CLI | ✅ | Requires the `codex` CLI |
 | Gemini | CLI | — | Requires the Gemini CLI |
 | DeepSeek | CLI | — | Via [`llm`](https://llm.datasette.io) + `llm-deepseek` |
@@ -25,12 +25,16 @@ The set of reviewers isn't hardcoded. It comes from a JSON config you can edit p
 
 Toggle any with `"enabled": true | false`. Add more with one entry. See [CONFIG.md](CONFIG.md).
 
-## Install
+## Use with your coding agent
 
-This is a Claude Code skill — drop it into your skills directory:
+The skill is one markdown procedure (`SKILL.md`) plus a JSON config (`reviewers.default.json`) — any coding agent that can read markdown and run shell commands can follow it. Pick your host:
+
+### Claude Code
+
+Clone into your skills directory:
 
 ```bash
-# user-level (available in every project)
+# user-level (every project)
 git clone https://github.com/swe-workflow/code-review-turbo.git \
   ~/.claude/skills/code-review-turbo
 
@@ -39,24 +43,95 @@ git clone https://github.com/swe-workflow/code-review-turbo.git \
   .claude/skills/code-review-turbo
 ```
 
-Then in Claude Code:
+Invoke:
 
 ```
 /code-review-turbo            # detect PR from current branch
 /code-review-turbo 1234       # explicit PR number
 ```
 
-The skill is marked `disable-model-invocation: true`, so it only runs when you invoke it explicitly — it won't surprise you mid-conversation.
+Marked `disable-model-invocation: true`, so it only runs when you explicitly invoke it.
+
+### Codex CLI
+
+Codex doesn't have a slash-command skill system, but it reads `AGENTS.md` for context and accepts non-interactive prompts. Pick one:
+
+**Direct invocation** — feed `SKILL.md` as the prompt:
+
+```bash
+git clone https://github.com/swe-workflow/code-review-turbo.git
+codex exec --full-auto < code-review-turbo/SKILL.md
+```
+
+**Or wire it through `AGENTS.md`** — append to your `~/.codex/AGENTS.md` or the repo's `AGENTS.md`:
+
+```markdown
+## Code review
+
+When asked for a thorough code review, follow the procedure at
+https://github.com/swe-workflow/code-review-turbo/blob/main/SKILL.md
+```
+
+Then prompt Codex with "code-review-turbo on PR 1234".
+
+Disable the `claude-agent` reviewer in `reviewers.default.json` (Codex has no in-process Claude sub-agent), or substitute a `cli` Claude entry.
+
+### Gemini CLI
+
+Create `~/.gemini/commands/code-review-turbo.toml`:
+
+```toml
+description = "Multi-agent code review (https://github.com/swe-workflow/code-review-turbo)"
+prompt = """
+Follow the procedure at https://github.com/swe-workflow/code-review-turbo/blob/main/SKILL.md
+on PR {{args}}; if no PR number is given, detect it from the current branch with `gh pr view`.
+"""
+```
+
+Invoke `/code-review-turbo 1234`. Disable or substitute the `claude-agent` reviewer (Gemini CLI has no in-process Claude sub-agent).
+
+### Cursor
+
+Clone the repo and add a Cursor rule referencing it:
+
+```bash
+git clone https://github.com/swe-workflow/code-review-turbo.git \
+  .cursor/skills/code-review-turbo
+```
+
+Create `.cursor/rules/code-review-turbo.mdc`:
+
+```markdown
+---
+description: code-review-turbo trigger
+alwaysApply: false
+---
+
+When the user asks for "code-review-turbo" or "thorough code review",
+follow the procedure in `.cursor/skills/code-review-turbo/SKILL.md`.
+```
+
+Then in chat: "code-review-turbo on PR 1234". Disable or substitute the `claude-agent` reviewer.
+
+### Any other agent (Aider, OpenCode, Roo Code, …)
+
+Clone the repo and ask your agent to read and follow `SKILL.md` on the desired PR:
+
+```
+Read code-review-turbo/SKILL.md and follow it on PR 1234.
+```
+
+Works with any agent that can read markdown and run shell commands.
 
 ## Prerequisites
 
 - `gh` CLI, authenticated (`gh auth status`).
 - For each enabled reviewer, its CLI or GitHub App installed:
   - `github-bot`: the bot's GitHub App on the repo (Cursor, CodeRabbit, …).
-  - `claude-agent`: nothing extra (it's Claude Code itself).
+  - `claude-agent`: **Claude Code only** — uses its in-process Agent tool. In other hosts, disable this reviewer or swap it for a `cli` Claude entry.
   - `cli`: the binary referenced in the `command` template — e.g. `codex`, `gemini`, `llm` + the relevant model plugin.
 
-If a CLI you've added isn't already in `SKILL.md`'s `allowed-tools` line, add `Bash(<binary>:*)` or you'll be prompted on every run. See [CONFIG.md](CONFIG.md#allowed-tools-note).
+In Claude Code, `allowed-tools` in `SKILL.md`'s frontmatter is the permission allowlist — add `Bash(<binary>:*)` for any new CLI reviewer or you'll be prompted on every run. Other hosts handle command permissions on their own terms (Codex sandbox, Gemini policy, Cursor settings).
 
 ## Configure per project
 

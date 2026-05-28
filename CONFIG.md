@@ -34,10 +34,12 @@ To customize per-project, copy `reviewers.default.json` to your repo root as `.c
 | `type` | How it runs | Can investigate code? | Required fields |
 |--------|-------------|-----------------------|-----------------|
 | `github-bot` | Posts a trigger comment on the PR, then polls for the bot's review comments | Yes (cloud) | `trigger`, `authorLogins` |
-| `claude-agent` | In-process Claude sub-agent via the Agent tool | Yes (Bash/Read/Grep/Glob) | — |
+| `claude-agent` | In-process Claude sub-agent via Claude Code's Agent tool (**Claude Code only**) | Yes (Bash/Read/Grep/Glob) | — |
 | `cli` | Runs a shell command with the review prompt on stdin | Only if the CLI is agentic | `command` |
 
 **Agentic vs. one-shot `cli` reviewers:** agentic CLIs (Codex, Gemini CLI, Claude) can run commands (`EXPLAIN ANALYZE`, read files) to validate findings. One-shot wrappers (e.g. `llm`) only see the prompt + diff and reason from that. Both contribute findings to the cross-reference; just expect less depth from one-shot reviewers.
+
+**`claude-agent` and non-Claude-Code hosts.** The `claude-agent` type uses Claude Code's in-process Agent tool — it only runs when the host coding agent *is* Claude Code. In Codex CLI, Gemini CLI, Cursor, or any other host, disable these entries (`"enabled": false`) or substitute a `cli` Claude reviewer: `{ "name": "Claude", "type": "cli", "command": "claude -p < {PROMPT_FILE}" }`.
 
 ## Adding a `cli` model
 

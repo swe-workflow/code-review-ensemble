@@ -13,6 +13,8 @@ Configurable multi-agent code review: GitHub review bots + Claude sub-agent + Co
 
 The set of reviewers is **not hardcoded** — it comes from a config file. See [CONFIG.md](CONFIG.md) for the schema and how to add models like Gemini, DeepSeek, or Kimi.
 
+**Host-agent-agnostic.** This procedure runs in any coding agent that can read markdown and run shell commands — Claude Code, Codex CLI, Gemini CLI, Cursor, … The YAML frontmatter above is Claude Code skill metadata; other agents ignore it. See [README.md](README.md#use-with-your-coding-agent) for per-agent install. The only host-specific reviewer type is `claude-agent` (Claude Code's in-process Agent tool) — in other hosts, disable it or swap in a `cli` Claude entry such as `{ "name": "Claude", "type": "cli", "command": "claude -p < {PROMPT_FILE}" }`.
+
 ## Step 0: Load Reviewer Configuration
 
 Resolve the config file with this cascade (**first match wins**):
@@ -21,7 +23,7 @@ Resolve the config file with this cascade (**first match wins**):
 2. `./.code-review-turbo.json` in the current working directory
 3. `reviewers.default.json` shipped alongside this `SKILL.md`
 
-Read the resolved file with the Read tool and parse the `reviewers` array. If a config file is found but cannot be parsed as valid JSON, STOP and tell the user which file is malformed — do not silently fall back, since they intended a specific config.
+Read the resolved file and parse the `reviewers` array. If a config file is found but cannot be parsed as valid JSON, STOP and tell the user which file is malformed — do not silently fall back, since they intended a specific config.
 
 Keep only reviewers where `enabled` is not `false`. Each reviewer has a `name`, a `type` (`github-bot`, `claude-agent`, or `cli`), and type-specific fields documented in [CONFIG.md](CONFIG.md).
 
@@ -211,13 +213,15 @@ Return a structured list grouped by severity (critical first, then high, medium,
 
 ## Step 3: Run All Local Reviewers in Parallel
 
-Launch every enabled `claude-agent` and `cli` reviewer at the same time (in parallel) — issue all of their invocations in a single batch so they run concurrently.
+Launch every enabled `claude-agent` and `cli` reviewer concurrently. Use whichever parallel-execution mechanism your host agent supports (Claude Code: issue all invocations in one tool-call batch; others: background subprocesses or the host's equivalent).
 
-### claude-agent reviewers
-For each, use the Agent tool to spawn a sub-agent with the full `REVIEW_PROMPT`. Give it Bash, Read, Grep, and Glob tools so it can run EXPLAIN queries and inspect code.
+### claude-agent reviewers (Claude Code only)
+For each, use Claude Code's Agent tool to spawn an in-process sub-agent with the full `REVIEW_PROMPT` and access to Bash, Read, Grep, and Glob so it can run EXPLAIN queries and inspect code.
+
+**If the host agent isn't Claude Code**, these reviewers can't run as-is. Either skip them with a notice to the user (Claude won't appear in the cross-reference), or substitute a `cli` Claude entry such as `{ "name": "Claude", "type": "cli", "command": "claude -p < {PROMPT_FILE}" }`.
 
 ### cli reviewers
-Write the `REVIEW_PROMPT` ONCE to a randomly-named temp file with the Write tool (e.g. `/tmp/review-prompt-<random-8-chars>.txt` — generate a unique random suffix to avoid collisions with concurrent runs). All `cli` reviewers share this one file.
+Write the `REVIEW_PROMPT` ONCE to a randomly-named temp file (e.g. `/tmp/review-prompt-<random-8-chars>.txt` — generate a unique random suffix to avoid collisions with concurrent runs). All `cli` reviewers share this one file.
 
 For each `cli` reviewer, take its `command` from the config, substitute `{PROMPT_FILE}` with the temp file path, and run it. For example, a reviewer with `"command": "codex exec --full-auto - < {PROMPT_FILE}"` runs as:
 
