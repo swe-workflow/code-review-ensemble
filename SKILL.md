@@ -1,5 +1,5 @@
 ---
-name: code-review-turbo
+name: code-review-ensemble
 description: Run a configurable multi-agent code review on the current branch's PR. Triggers any configured GitHub review bots, runs Claude, Codex, and any other CLI models (Gemini, DeepSeek, Kimi, …) in parallel, then cross-references all findings to filter out hallucinations. Reviewers are defined in a config file, so you can add or remove models. Use when you want a thorough, multi-perspective code review before merging.
 metadata:
   disable-model-invocation: 'true'
@@ -7,7 +7,7 @@ metadata:
 allowed-tools: Bash(gh:*) Bash(git:*) Bash(codex:*) Bash(gemini:*) Bash(llm:*) Bash(cat:*) Bash(tee:*) Bash(sleep:*) Bash(test:*) Agent Read Grep Glob Write(/tmp/*)
 ---
 
-# Code Review Turbo
+# Code Review Ensemble
 
 Configurable multi-agent code review: GitHub review bots + Claude sub-agent + Codex + any other CLI models you add, with cross-referencing to separate real bugs from hallucinations.
 
@@ -19,8 +19,8 @@ The set of reviewers is **not hardcoded** — it comes from a config file. See [
 
 Resolve the config file with this cascade (**first match wins**):
 
-1. `<repo-root>/.code-review-turbo.json` — get the repo root with `git rev-parse --show-toplevel` (if that fails — e.g. not a git repo — skip to 2)
-2. `./.code-review-turbo.json` in the current working directory
+1. `<repo-root>/.code-review-ensemble.json` — get the repo root with `git rev-parse --show-toplevel` (if that fails — e.g. not a git repo — skip to 2)
+2. `./.code-review-ensemble.json` in the current working directory
 3. `reviewers.default.json` shipped alongside this `SKILL.md`
 
 Read the resolved file and parse the `reviewers` array. If a config file is found but cannot be parsed as valid JSON, STOP and tell the user which file is malformed — do not silently fall back, since they intended a specific config.

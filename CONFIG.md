@@ -1,16 +1,16 @@
 # Reviewer Configuration
 
-`code-review-turbo` reads a JSON config that lists the reviewers to run. Add, remove, enable, or disable any reviewer here — including the built-in Bugbot, Claude, and Codex.
+`code-review-ensemble` reads a JSON config that lists the reviewers to run. Add, remove, enable, or disable any reviewer here — including the built-in Bugbot, Claude, and Codex.
 
 ## Where the config lives (cascade)
 
 The skill resolves the config with this order, **first match wins**:
 
-1. `<repo-root>/.code-review-turbo.json` (repo root via `git rev-parse --show-toplevel`)
-2. `./.code-review-turbo.json` (current working directory)
+1. `<repo-root>/.code-review-ensemble.json` (repo root via `git rev-parse --show-toplevel`)
+2. `./.code-review-ensemble.json` (current working directory)
 3. `reviewers.default.json` shipped next to `SKILL.md`
 
-To customize per-project, copy `reviewers.default.json` to your repo root as `.code-review-turbo.json` and edit it.
+To customize per-project, copy `reviewers.default.json` to your repo root as `.code-review-ensemble.json` and edit it.
 
 ## Schema
 

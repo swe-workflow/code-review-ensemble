@@ -1,4 +1,4 @@
-# code-review-turbo
+# code-review-ensemble
 
 A configurable multi-agent code-review procedure that runs in any coding agent — Claude Code, Codex CLI, Gemini CLI, Cursor, or others — and orchestrates GitHub PR bots, Claude, Codex, and any CLI model you wire up (Gemini, DeepSeek, Kimi, …), then cross-references their findings to separate real bugs from hallucinations.
 
@@ -35,19 +35,19 @@ Clone into your skills directory:
 
 ```bash
 # user-level (every project)
-git clone https://github.com/swe-workflow/code-review-turbo.git \
-  ~/.claude/skills/code-review-turbo
+git clone https://github.com/swe-workflow/code-review-ensemble.git \
+  ~/.claude/skills/code-review-ensemble
 
 # or project-level
-git clone https://github.com/swe-workflow/code-review-turbo.git \
-  .claude/skills/code-review-turbo
+git clone https://github.com/swe-workflow/code-review-ensemble.git \
+  .claude/skills/code-review-ensemble
 ```
 
 Invoke:
 
 ```
-/code-review-turbo            # detect PR from current branch
-/code-review-turbo 1234       # explicit PR number
+/code-review-ensemble            # detect PR from current branch
+/code-review-ensemble 1234       # explicit PR number
 ```
 
 Marked `disable-model-invocation: true`, so it only runs when you explicitly invoke it.
@@ -59,8 +59,8 @@ Codex doesn't have a slash-command skill system, but it reads `AGENTS.md` for co
 **Direct invocation** — feed `SKILL.md` as the prompt:
 
 ```bash
-git clone https://github.com/swe-workflow/code-review-turbo.git
-codex exec --full-auto < code-review-turbo/SKILL.md
+git clone https://github.com/swe-workflow/code-review-ensemble.git
+codex exec --full-auto < code-review-ensemble/SKILL.md
 ```
 
 **Or wire it through `AGENTS.md`** — append to your `~/.codex/AGENTS.md` or the repo's `AGENTS.md`:
@@ -69,56 +69,56 @@ codex exec --full-auto < code-review-turbo/SKILL.md
 ## Code review
 
 When asked for a thorough code review, follow the procedure at
-https://github.com/swe-workflow/code-review-turbo/blob/main/SKILL.md
+https://github.com/swe-workflow/code-review-ensemble/blob/main/SKILL.md
 ```
 
-Then prompt Codex with "code-review-turbo on PR 1234".
+Then prompt Codex with "code-review-ensemble on PR 1234".
 
 Disable the `claude-agent` reviewer in `reviewers.default.json` (Codex has no in-process Claude sub-agent), or substitute a `cli` Claude entry.
 
 ### Gemini CLI
 
-Create `~/.gemini/commands/code-review-turbo.toml`:
+Create `~/.gemini/commands/code-review-ensemble.toml`:
 
 ```toml
-description = "Multi-agent code review (https://github.com/swe-workflow/code-review-turbo)"
+description = "Multi-agent code review (https://github.com/swe-workflow/code-review-ensemble)"
 prompt = """
-Follow the procedure at https://github.com/swe-workflow/code-review-turbo/blob/main/SKILL.md
+Follow the procedure at https://github.com/swe-workflow/code-review-ensemble/blob/main/SKILL.md
 on PR {{args}}; if no PR number is given, detect it from the current branch with `gh pr view`.
 """
 ```
 
-Invoke `/code-review-turbo 1234`. Disable or substitute the `claude-agent` reviewer (Gemini CLI has no in-process Claude sub-agent).
+Invoke `/code-review-ensemble 1234`. Disable or substitute the `claude-agent` reviewer (Gemini CLI has no in-process Claude sub-agent).
 
 ### Cursor
 
 Clone the repo and add a Cursor rule referencing it:
 
 ```bash
-git clone https://github.com/swe-workflow/code-review-turbo.git \
-  .cursor/skills/code-review-turbo
+git clone https://github.com/swe-workflow/code-review-ensemble.git \
+  .cursor/skills/code-review-ensemble
 ```
 
-Create `.cursor/rules/code-review-turbo.mdc`:
+Create `.cursor/rules/code-review-ensemble.mdc`:
 
 ```markdown
 ---
-description: code-review-turbo trigger
+description: code-review-ensemble trigger
 alwaysApply: false
 ---
 
-When the user asks for "code-review-turbo" or "thorough code review",
-follow the procedure in `.cursor/skills/code-review-turbo/SKILL.md`.
+When the user asks for "code-review-ensemble" or "thorough code review",
+follow the procedure in `.cursor/skills/code-review-ensemble/SKILL.md`.
 ```
 
-Then in chat: "code-review-turbo on PR 1234". Disable or substitute the `claude-agent` reviewer.
+Then in chat: "code-review-ensemble on PR 1234". Disable or substitute the `claude-agent` reviewer.
 
 ### Any other agent (Aider, OpenCode, Roo Code, …)
 
 Clone the repo and ask your agent to read and follow `SKILL.md` on the desired PR:
 
 ```
-Read code-review-turbo/SKILL.md and follow it on PR 1234.
+Read code-review-ensemble/SKILL.md and follow it on PR 1234.
 ```
 
 Works with any agent that can read markdown and run shell commands.
@@ -135,10 +135,10 @@ In Claude Code, `allowed-tools` in `SKILL.md`'s frontmatter is the permission al
 
 ## Configure per project
 
-Copy `reviewers.default.json` to your repo root as `.code-review-turbo.json` and edit it. The skill resolves the config in this order, **first match wins**:
+Copy `reviewers.default.json` to your repo root as `.code-review-ensemble.json` and edit it. The skill resolves the config in this order, **first match wins**:
 
-1. `<repo-root>/.code-review-turbo.json`
-2. `./.code-review-turbo.json` (current working dir)
+1. `<repo-root>/.code-review-ensemble.json`
+2. `./.code-review-ensemble.json` (current working dir)
 3. `reviewers.default.json` (this repo's shipped default)
 
 Full schema, reviewer types, and examples — including how to add Gemini, DeepSeek, Kimi, GLM, or another GitHub bot — live in [CONFIG.md](CONFIG.md).
